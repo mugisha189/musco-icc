@@ -1,0 +1,39 @@
+name: Prod Deploy to SSH Server
+
+# on:
+#   push:
+#     branches:
+#       - main # Change this to your main branch
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'main'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Deploy to SSH server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            cd ~/apps/rca-icc/
+            git stash
+            git pull origin main
+            export NVM_DIR=~/.nvm
+            source ~/.nvm/nvm.sh
+            npm i -g pnpm
+            pnpm install
+            chmod +x scripts/create_prod_env.sh
+            ./scripts/create_prod_env.sh
+            pnpm build
+            pm2 restart rca_icc

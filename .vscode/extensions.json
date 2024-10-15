@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "sanity-io.vscode-sanity",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "Prisma.prisma",
+    "aaron-bond.better-comments"
+  ]
+}

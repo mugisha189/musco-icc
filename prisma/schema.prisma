@@ -1,0 +1,119 @@
+datasource db {
+    provider     = "mongodb"
+    url          = env("ICC_DB_URL")
+    relationMode = "prisma"
+}
+
+generator client {
+    provider      = "prisma-client-js"
+    binaryTargets = ["native", "rhel-openssl-1.0.x"]
+}
+
+model User {
+    id               String             @id @default(uuid()) @map("_id")
+    email            String           @unique
+    name             String?
+    password         String?
+    createdAt        DateTime           @default(now())
+    updatedAt        DateTime           @updatedAt
+    UserPrediction   UserPrediction[]
+    UserOverallScore UserOverallScore[]
+}
+
+model UserPrediction {
+    id            String               @id @default(uuid()) @map("_id")
+    user          User                 @relation(fields: [userId], references: [id])
+    userId        String
+    matchId       String
+    prediction    Prediction
+    status        UserPredictionStatus @default(NOT_MARKED)
+    points        Int                  @default(0)
+    season        Season               @relation(fields: [seasonId], references: [id])
+    seasonId      String
+    matchCategory MatchCategory
+    reason        Reason?
+    createdAt     DateTime?            @default(now())
+    updatedAt     DateTime?            @updatedAt
+}
+
+enum UserPredictionStatus {
+    NOT_MARKED
+    MARKED
+}
+
+enum MatchCategory {
+    football
+    basketball
+    volleyball
+}
+
+type Prediction {
+    manOfTheMatch        String
+    firstTeamToScore     String
+    homeScore            Int
+    awayScore            Int
+    highestScoringPlayer String
+}
+
+type Reason {
+    reason String
+    type EnumReasonType
+}
+
+enum EnumReasonType {
+    CHEATING
+    NOT_CONSIDERED
+    OTHER
+}
+
+model UserOverallScore {
+    id               String    @id @default(uuid()) @map("_id")
+    score            Int
+    lastPosition     Int
+    currentPosition  Int
+    lastMatchId      String
+    matchesPredicted Int?
+    user             User      @relation(fields: [userId], references: [id])
+    userId           String
+    season           Season    @relation(fields: [seasonId], references: [id])
+    seasonId         String
+    createdAt        DateTime? @default(now())
+    updatedAt        DateTime? @updatedAt
+}
+
+model Season {
+    id               String             @id @default(uuid()) @map("_id")
+    name             String             @unique
+    status           SeasonStatus       @default(ACTIVE)
+    startDate        DateTime
+    endDate          DateTime
+    createdAt        DateTime           @default(now())
+    updatedAt        DateTime           @updatedAt
+    UserOverallScore UserOverallScore[]
+    UserPrediction   UserPrediction[]
+}
+
+enum SeasonStatus {
+    ACTIVE
+    INACTIVE
+}
+
+model MatchSchedule {
+    id            String         @id @default(uuid()) @map("_id")
+    name          String
+    status        ScheduleStatus @default(QUEUED)
+    scheduledTime DateTime
+    matchId       String         @unique
+    homeTeam      String
+    awayTeam      String
+    matchCategory MatchCategory
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @updatedAt
+}
+
+enum ScheduleStatus {
+    QUEUED
+    RUNNING
+    COMPLETED
+    FAILED
+}
